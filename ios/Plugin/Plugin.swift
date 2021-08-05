@@ -550,6 +550,72 @@ public class CapacitorHealthkit: CAPPlugin {
         }
     }
 
+    @objc func queryHKitStatisticsCollection(_ call: CAPPluginCall) {
+        guard let _sampleName = call.options["sampleName"] as? String else {
+            return call.reject("Must provide sampleName")
+        }
+        guard let _startDate = call.options["startDate"] as? Date else {
+            return call.reject("Must provide startDate")
+        }
+        guard let _endDate = call.options["endDate"] as? Date else {
+            return call.reject("Must provide endDate")
+        }
+        guard let _limit = call.options["limit"] as? Int else {
+            return call.reject("Must provide limit")
+        }
+
+        let limit: Int = (_limit == 0) ? HKObjectQueryNoLimit : _limit
+        var interval = DateComponents()
+        interval.day = call.options["interval"] as? Int ?? 1
+
+        //   Get the start of the day
+        let cal = Calendar(identifier: Calendar.Identifier.gregorian)
+        let startDateDayStart = cal.startOfDay(for: _startDate)
+
+        let predicate = HKQuery.predicateForSamples(withStart: _startDate, end: _endDate, options: HKQueryOptions.strictStartDate)
+
+        guard let sampleType: HKSampleType = getSampleType(sampleName: _sampleName) else {
+            return call.reject("Error in sample name")
+        }
+
+        //  Perform the Query
+        let query = HKStatisticsCollectionQuery(
+            quantityType: sampleType as! HKQuantityType,
+            quantitySamplePredicate: predicate,
+            options: [.cumulativeSum],
+            anchorDate: startDateDayStart as Date,
+            intervalComponents: interval
+            )
+
+        query.initialResultsHandler = { _, results, error in
+            if error != nil {
+                print("Something went Wrong")
+                return
+            }
+            var output: [[String: Any]] = []
+            for sample in results?.statistics() ?? [] {
+                let sampleSD = sample.startDate as NSDate
+                let sampleED = sample.endDate as NSDate
+                let sampleInterval = sampleED.timeIntervalSince(sampleSD as Date)
+                let sampleHoursBetweenDates = sampleInterval / 3600
+                let periodSum: Double! = sample.sumQuantity()?.doubleValue(for: HKUnit.count())
+
+                let constructedSample: [String: Any] = [
+                    "startDate": ISO8601DateFormatter().string(from: sample.startDate),
+                    "endDate": ISO8601DateFormatter().string(from: sample.endDate),
+                    "value": Int(periodSum!),
+                ]
+                output.append(constructedSample)
+            }
+            print(output)
+            call.resolve([
+                "resultData": output,
+            ])
+        }
+
+        healthStore.execute(query)
+    }
+
     func queryHKitSampleTypeSpecial(sampleName: String, startDate: Date, endDate: Date, limit: Int, completion: @escaping (Result<[String: Any], Error>) -> Void) {
         let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: HKQueryOptions.strictStartDate)
 
