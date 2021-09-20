@@ -468,11 +468,12 @@ public class CapacitorHealthkit: CAPPlugin {
         guard let _sampleName = call.options["sampleName"] as? String else {
             return call.reject("Must provide sampleName")
         }
-        guard let _startDate = call.options["startDate"] as? Date else {
-            return call.reject("Must provide startDate")
+        guard let _startDate = ISO8601DateFormatter().date(from: call.options["startDate"] as! String) else {
+            print("queryHKitSampleType", call.options["startDate"]!, _sampleName)
+            return call.reject("Must provide startDate as ISOString without milliseconds: queryHKitSampleType")
         }
-        guard let _endDate = call.options["endDate"] as? Date else {
-            return call.reject("Must provide endDate")
+        guard let _endDate = ISO8601DateFormatter().date(from: call.options["endDate"] as! String) else {
+            return call.reject("Must provide endDate as ISOString without milliseconds")
         }
         guard let _limit = call.options["limit"] as? Int else {
             return call.reject("Must provide limit")
@@ -504,12 +505,13 @@ public class CapacitorHealthkit: CAPPlugin {
             call.reject("Must provide sampleNames")
             return
         }
-        guard let _startDate = call.options["startDate"] as? Date else {
-            call.reject("Must provide startDate")
+        guard let _startDate = ISO8601DateFormatter().date(from: call.options["startDate"] as! String) else {
+            print("multipleQueryHKitSampleType", call.options["startDate"]!)
+            call.reject("Must provide startDate as ISOString without milliseconds: multipleQueryHKitSampleType")
             return
         }
-        guard let _endDate = call.options["endDate"] as? Date else {
-            call.reject("Must provide endDate")
+        guard let _endDate = ISO8601DateFormatter().date(from: call.options["endDate"] as! String) else {
+            call.reject("Must provide endDate as ISOString without milliseconds")
             return
         }
         guard let _limit = call.options["limit"] as? Int else {
@@ -554,17 +556,19 @@ public class CapacitorHealthkit: CAPPlugin {
         guard let _sampleName = call.options["sampleName"] as? String else {
             return call.reject("Must provide sampleName")
         }
-        guard let _startDate = call.options["startDate"] as? Date else {
-            return call.reject("Must provide startDate")
-        }
-        guard let _endDate = call.options["endDate"] as? Date else {
-            return call.reject("Must provide endDate")
-        }
-        guard let _limit = call.options["limit"] as? Int else {
-            return call.reject("Must provide limit")
-        }
+        guard let _startDate = ISO8601DateFormatter().date(from: call.options["startDate"] as! String) else {
+            print("queryHKitStatisticsCollection", call.options["startDate"]!, _sampleName)
 
-        let limit: Int = (_limit == 0) ? HKObjectQueryNoLimit : _limit
+            return call.reject("Must provide startDate as ISOString without milliseconds: queryHKitStatisticsCollection")
+        }
+        guard let _endDate = ISO8601DateFormatter().date(from: call.options["endDate"] as! String) else {
+            return call.reject("Must provide endDate as ISOString without milliseconds")
+        }
+//        guard let _limit = call.options["limit"] as? Int else {
+//            return call.reject("Must provide limit")
+//        }
+
+//        let limit: Int = (_limit == 0) ? HKObjectQueryNoLimit : _limit
         var interval = DateComponents()
         interval.day = call.options["interval"] as? Int ?? 1
 
@@ -585,7 +589,7 @@ public class CapacitorHealthkit: CAPPlugin {
             options: [.cumulativeSum],
             anchorDate: startDateDayStart as Date,
             intervalComponents: interval
-            )
+        )
 
         query.initialResultsHandler = { _, results, error in
             if error != nil {
@@ -594,10 +598,10 @@ public class CapacitorHealthkit: CAPPlugin {
             }
             var output: [[String: Any]] = []
             for sample in results?.statistics() ?? [] {
-                let sampleSD = sample.startDate as NSDate
-                let sampleED = sample.endDate as NSDate
-                let sampleInterval = sampleED.timeIntervalSince(sampleSD as Date)
-                let sampleHoursBetweenDates = sampleInterval / 3600
+//                let sampleSD = sample.startDate as NSDate
+//                let sampleED = sample.endDate as NSDate
+//                let sampleInterval = sampleED.timeIntervalSince(sampleSD as Date)
+//                let sampleHoursBetweenDates = sampleInterval / 3600
                 let periodSum: Double! = sample.sumQuantity()?.doubleValue(for: HKUnit.count())
 
                 let constructedSample: [String: Any] = [
