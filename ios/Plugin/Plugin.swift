@@ -23,6 +23,24 @@ public class CapacitorHealthkit: CAPPlugin {
             return HKQuantityType.quantityType(forIdentifier: HKQuantityTypeIdentifier.distanceCycling)!
         case "bloodGlucose":
             return HKQuantityType.quantityType(forIdentifier: HKQuantityTypeIdentifier.bloodGlucose)!
+        case "oxygenSaturation":
+            return HKQuantityType.quantityType(forIdentifier: HKQuantityTypeIdentifier.oxygenSaturation)!
+        case "bodyTemperature":
+            return HKQuantityType.quantityType(forIdentifier: HKQuantityTypeIdentifier.bodyTemperature)!
+        case "bloodPressureDiastolic":
+            return HKQuantityType.quantityType(forIdentifier: HKQuantityTypeIdentifier.bloodPressureDiastolic)!
+        case "bloodPressureSystolic":
+            return HKQuantityType.quantityType(forIdentifier: HKQuantityTypeIdentifier.bloodPressureSystolic)!
+        case "respiratoryRate":
+            return HKQuantityType.quantityType(forIdentifier: HKQuantityTypeIdentifier.respiratoryRate)!
+        case "heartRate":
+            return HKQuantityType.quantityType(forIdentifier: HKQuantityTypeIdentifier.heartRate)!
+        case "restingHeartRate":
+            return HKQuantityType.quantityType(forIdentifier: HKQuantityTypeIdentifier.restingHeartRate)!
+        case "walkingHeartRateAverage":
+            return HKQuantityType.quantityType(forIdentifier: HKQuantityTypeIdentifier.walkingHeartRateAverage)!
+        case "heartRateVariabilitySDNN":
+            return HKQuantityType.quantityType(forIdentifier: HKQuantityTypeIdentifier.heartRateVariabilitySDNN)!
         case "sleepAnalysis":
             return HKObjectType.categoryType(forIdentifier: HKCategoryTypeIdentifier.sleepAnalysis)!
         case "workoutType":
@@ -53,6 +71,20 @@ public class CapacitorHealthkit: CAPPlugin {
                 types.insert(HKQuantityType.quantityType(forIdentifier: HKQuantityTypeIdentifier.distanceCycling)!)
             case "bloodGlucose":
                 types.insert(HKQuantityType.quantityType(forIdentifier: HKQuantityTypeIdentifier.bloodGlucose)!)
+            case "heartRate":
+                types.insert(HKQuantityType.quantityType(forIdentifier: HKQuantityTypeIdentifier.heartRate)!)
+                types.insert(HKQuantityType.quantityType(forIdentifier: HKQuantityTypeIdentifier.restingHeartRate)!)
+                types.insert(HKQuantityType.quantityType(forIdentifier: HKQuantityTypeIdentifier.walkingHeartRateAverage)!)
+                types.insert(HKQuantityType.quantityType(forIdentifier: HKQuantityTypeIdentifier.heartRateVariabilitySDNN)!)
+            case "oxygenSaturation":
+                types.insert(HKQuantityType.quantityType(forIdentifier: HKQuantityTypeIdentifier.oxygenSaturation)!)
+            case "bodyTemperature":
+                types.insert(HKQuantityType.quantityType(forIdentifier: HKQuantityTypeIdentifier.bodyTemperature)!)
+            case "bloodPressure":
+                types.insert(HKQuantityType.quantityType(forIdentifier: HKQuantityTypeIdentifier.bloodPressureDiastolic)!)
+                types.insert(HKQuantityType.quantityType(forIdentifier: HKQuantityTypeIdentifier.bloodPressureSystolic)!)
+            case "respiratoryRate":
+                types.insert(HKQuantityType.quantityType(forIdentifier: HKQuantityTypeIdentifier.respiratoryRate)!)
             default:
                 print("no match in case: " + item)
             }
@@ -329,136 +361,155 @@ public class CapacitorHealthkit: CAPPlugin {
 
     func generateOutput(sampleName: String, results: [HKSample]?) -> [[String: Any]]? {
         var output: [[String: Any]] = []
-        for result in results! {
-            if sampleName == "sleepAnalysis" {
-                guard let sample = result as? HKCategorySample else {
-                    return nil
-                }
-                let sleepSD = sample.startDate as NSDate
-                let sleepED = sample.endDate as NSDate
-                let sleepInterval = sleepED.timeIntervalSince(sleepSD as Date)
-                let sleepHoursBetweenDates = sleepInterval / 3600
-                let sleepState = (sample.value == HKCategoryValueSleepAnalysis.inBed.rawValue) ? "InBed" : "Asleep"
-                let constructedSample: [String: Any] = [
-                    "uuid": sample.uuid.uuidString,
-                    "timeZone": getTimeZoneString(sample: sample) as String,
-                    "startDate": ISO8601DateFormatter().string(from: sample.startDate),
-                    "endDate": ISO8601DateFormatter().string(from: sample.endDate),
-                    "duration": sleepHoursBetweenDates,
-                    "sleepState": sleepState,
-                    "source": sample.sourceRevision.source.name,
-                    "sourceBundleId": sample.sourceRevision.source.bundleIdentifier,
-                ]
-                output.append(constructedSample)
-            } else if sampleName == "workoutType" {
-                guard let sample = result as? HKWorkout else {
-                    return nil
-                }
-
-                var TEBData: Double? = -1
-                var TDData: Double? = -1
-                var TFCData: Double? = -1
-                var TSSCData: Double? = -1
-
-                var unitTEB: HKUnit?
-                if (sample.totalEnergyBurned) != nil {
-                    if (sample.totalEnergyBurned?.is(compatibleWith: HKUnit.kilocalorie()))! {
-                        unitTEB = HKUnit.kilocalorie()
+        if results != nil {
+            for result in results! {
+                if sampleName == "sleepAnalysis" {
+                    guard let sample = result as? HKCategorySample else {
+                        return nil
                     }
-                    guard unitTEB != nil else { return nil }
-                    TEBData = sample.totalEnergyBurned?.doubleValue(for: unitTEB!)
-                }
-
-                var unitTD: HKUnit?
-                if (sample.totalDistance) != nil {
-                    if (sample.totalDistance?.is(compatibleWith: HKUnit.meter()))! {
-                        unitTD = HKUnit.meter()
+                    let sleepSD = sample.startDate as NSDate
+                    let sleepED = sample.endDate as NSDate
+                    let sleepInterval = sleepED.timeIntervalSince(sleepSD as Date)
+                    let sleepHoursBetweenDates = sleepInterval / 3600
+                    let sleepState = (sample.value == HKCategoryValueSleepAnalysis.inBed.rawValue) ? "InBed" : "Asleep"
+                    let constructedSample: [String: Any] = [
+                        "uuid": sample.uuid.uuidString,
+                        "timeZone": getTimeZoneString(sample: sample) as String,
+                        "startDate": ISO8601DateFormatter().string(from: sample.startDate),
+                        "endDate": ISO8601DateFormatter().string(from: sample.endDate),
+                        "duration": sleepHoursBetweenDates,
+                        "sleepState": sleepState,
+                        "source": sample.sourceRevision.source.name,
+                        "sourceBundleId": sample.sourceRevision.source.bundleIdentifier,
+                    ]
+                    output.append(constructedSample)
+                } else if sampleName == "workoutType" {
+                    guard let sample = result as? HKWorkout else {
+                        return nil
                     }
-                    guard unitTD != nil else { return nil }
-                    TDData = sample.totalDistance?.doubleValue(for: unitTD!)
-                }
 
-                var unitTFC: HKUnit?
-                if (sample.totalFlightsClimbed) != nil {
-                    if (sample.totalFlightsClimbed?.is(compatibleWith: HKUnit.count()))! {
-                        unitTFC = HKUnit.count()
+                    var TEBData: Double? = -1
+                    var TDData: Double? = -1
+                    var TFCData: Double? = -1
+                    var TSSCData: Double? = -1
+
+                    var unitTEB: HKUnit?
+                    if (sample.totalEnergyBurned) != nil {
+                        if (sample.totalEnergyBurned?.is(compatibleWith: HKUnit.kilocalorie()))! {
+                            unitTEB = HKUnit.kilocalorie()
+                        }
+                        guard unitTEB != nil else { return nil }
+                        TEBData = sample.totalEnergyBurned?.doubleValue(for: unitTEB!)
                     }
-                    guard unitTFC != nil else { return nil }
-                    TFCData = sample.totalFlightsClimbed?.doubleValue(for: unitTFC!)
-                }
 
-                var unitTSSC: HKUnit?
-                if (sample.totalSwimmingStrokeCount) != nil {
-                    if (sample.totalSwimmingStrokeCount?.is(compatibleWith: HKUnit.count()))! {
-                        unitTSSC = HKUnit.count()
+                    var unitTD: HKUnit?
+                    if (sample.totalDistance) != nil {
+                        if (sample.totalDistance?.is(compatibleWith: HKUnit.meter()))! {
+                            unitTD = HKUnit.meter()
+                        }
+                        guard unitTD != nil else { return nil }
+                        TDData = sample.totalDistance?.doubleValue(for: unitTD!)
                     }
-                    guard unitTSSC != nil else { return nil }
-                    TSSCData = sample.totalSwimmingStrokeCount?.doubleValue(for: unitTSSC!)
-                }
 
-                let workoutSD = sample.startDate as NSDate
-                let workoutED = sample.endDate as NSDate
-                let workoutInterval = workoutED.timeIntervalSince(workoutSD as Date)
-                let workoutHoursBetweenDates = workoutInterval / 3600
+                    var unitTFC: HKUnit?
+                    if (sample.totalFlightsClimbed) != nil {
+                        if (sample.totalFlightsClimbed?.is(compatibleWith: HKUnit.count()))! {
+                            unitTFC = HKUnit.count()
+                        }
+                        guard unitTFC != nil else { return nil }
+                        TFCData = sample.totalFlightsClimbed?.doubleValue(for: unitTFC!)
+                    }
 
-                output.append([
-                    "uuid": sample.uuid.uuidString,
-                    "startDate": ISO8601DateFormatter().string(from: sample.startDate),
-                    "endDate": ISO8601DateFormatter().string(from: sample.endDate),
-                    "duration": workoutHoursBetweenDates,
-                    "source": sample.sourceRevision.source.name,
-                    "sourceBundleId": sample.sourceRevision.source.bundleIdentifier,
-                    "workoutActivityId": sample.workoutActivityType.rawValue,
-                    "workoutActivityName": returnWorkoutActivityTypeValueDictionnary(activityType: sample.workoutActivityType),
-                    "totalEnergyBurned": TEBData!, // kilocalorie
-                    "totalDistance": TDData!, // meter
-                    "totalFlightsClimbed": TFCData!, // count
-                    "totalSwimmingStrokeCount": TSSCData!, // count
-                ])
-            } else {
-                guard let sample = result as? HKQuantitySample else {
-                    return nil
-                }
-                var unit: HKUnit?
-                var unitName: String?
+                    var unitTSSC: HKUnit?
+                    if (sample.totalSwimmingStrokeCount) != nil {
+                        if (sample.totalSwimmingStrokeCount?.is(compatibleWith: HKUnit.count()))! {
+                            unitTSSC = HKUnit.count()
+                        }
+                        guard unitTSSC != nil else { return nil }
+                        TSSCData = sample.totalSwimmingStrokeCount?.doubleValue(for: unitTSSC!)
+                    }
 
-                if sample.quantityType.is(compatibleWith: HKUnit.meter()) {
-                    unit = HKUnit.meter()
-                    unitName = "meter"
-                } else if sample.quantityType.is(compatibleWith: HKUnit.count()) {
-                    unit = HKUnit.count()
-                    unitName = "count"
-                } else if sample.quantityType.is(compatibleWith: HKUnit.minute()) {
-                    unit = HKUnit.minute()
-                    unitName = "minute"
-                } else if sample.quantityType.is(compatibleWith: HKUnit.kilocalorie()) {
-                    unit = HKUnit.kilocalorie()
-                    unitName = "kilocalorie"
-                } else if sample.quantityType.is(compatibleWith: HKUnit.moleUnit(withMolarMass: HKUnitMolarMassBloodGlucose).unitDivided(by: HKUnit.literUnit(with: .kilo))) {
-                    unit = HKUnit.moleUnit(withMolarMass: HKUnitMolarMassBloodGlucose).unitDivided(by: HKUnit.literUnit(with: .kilo))
-                    unitName = "mmol/L"
+                    let workoutSD = sample.startDate as NSDate
+                    let workoutED = sample.endDate as NSDate
+                    let workoutInterval = workoutED.timeIntervalSince(workoutSD as Date)
+                    let workoutHoursBetweenDates = workoutInterval / 3600
+
+                    output.append([
+                        "uuid": sample.uuid.uuidString,
+                        "startDate": ISO8601DateFormatter().string(from: sample.startDate),
+                        "endDate": ISO8601DateFormatter().string(from: sample.endDate),
+                        "duration": workoutHoursBetweenDates,
+                        "source": sample.sourceRevision.source.name,
+                        "sourceBundleId": sample.sourceRevision.source.bundleIdentifier,
+                        "workoutActivityId": sample.workoutActivityType.rawValue,
+                        "workoutActivityName": returnWorkoutActivityTypeValueDictionnary(activityType: sample.workoutActivityType),
+                        "totalEnergyBurned": TEBData!, // kilocalorie
+                        "totalDistance": TDData!, // meter
+                        "totalFlightsClimbed": TFCData!, // count
+                        "totalSwimmingStrokeCount": TSSCData!, // count
+                    ])
                 } else {
-                    print("Error: unknown unit type")
+                    guard let sample = result as? HKQuantitySample else {
+                        return nil
+                    }
+                    var unit: HKUnit?
+                    var unitName: String?
+
+                    if sample.quantityType.is(compatibleWith: HKUnit.meter()) {
+                        unit = HKUnit.meter()
+                        unitName = "meter"
+                    } else if sample.quantityType.is(compatibleWith: HKUnit.count()) {
+                        unit = HKUnit.count()
+                        unitName = "count"
+                    } else if sample.quantityType.is(compatibleWith: HKUnit.count().unitDivided(by: HKUnit.minute())) {
+                        unit = HKUnit.count().unitDivided(by: HKUnit.minute())
+                        unitName = "bpm"
+                    } else if sample.quantityType.is(compatibleWith: HKUnit.secondUnit(with: .milli)) {
+                        unit = HKUnit.secondUnit(with: .milli)
+                        unitName = "ms"
+                    } else if sample.quantityType.is(compatibleWith: HKUnit.percent()) {
+                        unit = HKUnit.percent()
+                        unitName = "%"
+                    } else if sample.quantityType.is(compatibleWith: HKUnit.degreeCelsius()) {
+                        unit = HKUnit.degreeCelsius()
+                        unitName = "°C"
+                    } else if sample.quantityType.is(compatibleWith: HKUnit.millimeterOfMercury()) {
+                        unit = HKUnit.millimeterOfMercury()
+                        unitName = "mm Hg"
+                    } else if sample.quantityType.is(compatibleWith: HKUnit.minute()) {
+                        unit = HKUnit.minute()
+                        unitName = "minute"
+                    } else if sample.quantityType.is(compatibleWith: HKUnit.kilocalorie()) {
+                        unit = HKUnit.kilocalorie()
+                        unitName = "kilocalorie"
+                    } else if sample.quantityType.is(compatibleWith: HKUnit.moleUnit(withMolarMass: HKUnitMolarMassBloodGlucose).unitDivided(by: HKUnit.literUnit(with: .kilo))) {
+                        unit = HKUnit.moleUnit(withMolarMass: HKUnitMolarMassBloodGlucose).unitDivided(by: HKUnit.literUnit(with: .kilo))
+                        unitName = "mmol/L"
+                    } else {
+                        print("Error: unknown unit type")
+                        print(sampleName)
+                        unitName = sampleName
+                    }
+
+                    let quantitySD: NSDate
+                    let quantityED: NSDate
+                    quantitySD = sample.startDate as NSDate
+                    quantityED = sample.endDate as NSDate
+                    let quantityInterval = quantityED.timeIntervalSince(quantitySD as Date)
+                    let quantitySecondsInAnHour: Double = 3600
+                    let quantityHoursBetweenDates = quantityInterval / quantitySecondsInAnHour
+
+                    output.append([
+                        "uuid": sample.uuid.uuidString,
+                        "value": sample.quantity.doubleValue(for: unit!),
+                        "unitName": unitName!,
+                        "startDate": ISO8601DateFormatter().string(from: sample.startDate),
+                        "endDate": ISO8601DateFormatter().string(from: sample.endDate),
+                        "duration": quantityHoursBetweenDates,
+                        "source": sample.sourceRevision.source.name,
+                        "sourceBundleId": sample.sourceRevision.source.bundleIdentifier,
+                    ])
                 }
-
-                let quantitySD: NSDate
-                let quantityED: NSDate
-                quantitySD = sample.startDate as NSDate
-                quantityED = sample.endDate as NSDate
-                let quantityInterval = quantityED.timeIntervalSince(quantitySD as Date)
-                let quantitySecondsInAnHour: Double = 3600
-                let quantityHoursBetweenDates = quantityInterval / quantitySecondsInAnHour
-
-                output.append([
-                    "uuid": sample.uuid.uuidString,
-                    "value": sample.quantity.doubleValue(for: unit!),
-                    "unitName": unitName!,
-                    "startDate": ISO8601DateFormatter().string(from: sample.startDate),
-                    "endDate": ISO8601DateFormatter().string(from: sample.endDate),
-                    "duration": quantityHoursBetweenDates,
-                    "source": sample.sourceRevision.source.name,
-                    "sourceBundleId": sample.sourceRevision.source.bundleIdentifier,
-                ])
             }
         }
         return output
