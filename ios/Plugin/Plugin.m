@@ -12,4 +12,5 @@ CAP_PLUGIN(CapacitorHealthkit, "CapacitorHealthkit",
            CAP_PLUGIN_METHOD(queryHKitStatisticsCollection, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(isEditionAuthorized, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(multipleIsEditionAuthorized, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(setUpBackgroundObservers, CAPPluginReturnPromise);
            )
