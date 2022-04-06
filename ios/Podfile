@@ -7,6 +7,7 @@ def capacitor_pods
   pod 'CapacitorCordova', :path => '../node_modules/@capacitor/ios'
   pod 'Alamofire', '~> 5.5'
   pod 'JWTDecode', '~> 2.6'
+  pod 'GzipSwift', '~> 5.2'
 end
 
 target 'Plugin' do
