@@ -5,6 +5,8 @@ def capacitor_pods
   use_frameworks!
   pod 'Capacitor', :path => '../node_modules/@capacitor/ios'
   pod 'CapacitorCordova', :path => '../node_modules/@capacitor/ios'
+  pod 'Alamofire', '~> 5.5'
+  pod 'JWTDecode', '~> 2.6'
 end
 
 target 'Plugin' do
