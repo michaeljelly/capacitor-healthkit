@@ -67,7 +67,7 @@ public class CapacitorHealthkit: CAPPlugin {
                 call.reject("Could not get permission")
                 return
             }
-            call.resolve()
+            call.resolve(["success": true])
         }
     }
 
@@ -112,7 +112,7 @@ public class CapacitorHealthkit: CAPPlugin {
 
         let query = HKSampleQuery(sampleType: sampleType, predicate: predicate, limit: limit, sortDescriptors: nil) {
             _, results, _ in
-            guard let output = Formatter.generateOutput(sampleName: _sampleName, results: results) else { 
+            guard let output = Formatter.generateOutput(sampleName: _sampleName, results: results) else {
                 return call.reject("Error happened while generating outputs")
             }
 
@@ -171,7 +171,7 @@ public class CapacitorHealthkit: CAPPlugin {
         }
 
         dispatchGroup.notify(queue: .main) {
-            print(output.description)
+            print("multipleQueryHKitSampleType", _startDate)
             call.resolve(output)
         }
     }
@@ -227,7 +227,7 @@ public class CapacitorHealthkit: CAPPlugin {
                 ]
                 output.append(constructedSample)
             }
-            print(output)
+            print("queryHKitStatisticsCollection", _sampleName)
             call.resolve([
                 "resultData": output,
             ])
